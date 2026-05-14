@@ -1,0 +1,18 @@
+UNLICENSED
+
+Copyright (c) ${YEAR} ${FOUNDER_NAME}
+
+All rights reserved.
+
+This source code and associated documentation are made publicly visible for
+reference and educational purposes only. No license is granted, expressed or
+implied, to use, modify, distribute, sublicense, or commercialize any portion
+of this work in original or derived form.
+
+The architecture patterns demonstrated here are extracted from a real
+operating-OS codebase. To request a license for use in your own project,
+contact the source repo owner via the GitHub repository's issue tracker.
+
+Provided "AS IS", without warranty of any kind, express or implied, including
+but not limited to the warranties of merchantability, fitness for a particular
+purpose and noninfringement.

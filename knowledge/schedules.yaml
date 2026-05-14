@@ -1,0 +1,89 @@
+# ============================================================================
+# schedules.yaml — Scheduled triggers (Bài #8)
+# ============================================================================
+# Tier 1 declarative file. Edit via PR governance.
+# Defines when scheduled tasks fire. Dispatcher reads this + invokes skills.
+#
+# Schema validation: schemas/schedules.schema.json
+# Engine: supabase/functions/schedule-dispatcher/
+# ============================================================================
+
+version: "1.0.0"
+timezone: ${FOUNDER_TIMEZONE}
+
+schedules:
+  # === Founder rhythm-aware schedules ===
+  
+  # Morning brief assembly (Bài #19 capstone)
+  - id: morning-brief-assembly
+    cron: "45 5 * * *"               # 05:45 in ${FOUNDER_TIMEZONE}
+    description: "Assemble morning brief 15 min before founder block"
+    skill: synthesize-morning-brief
+    enabled_when_mode: [hybrid, full_api]
+    requires_api: anthropic
+    fallback: queue_for_founder_review
+    cost_estimate: $0.03 per run
+  
+  # === Domain schedules (customize per project) ===
+  
+  # {{ADD_DOMAIN_SCHEDULES_HERE}}
+  # Examples:
+  # - id: weekly-customer-pulse
+  #   cron: "0 9 * * MON"
+  #   description: "Weekly customer health snapshot"
+  #   skill: customer-pulse-aggregator
+
+  # Hourly ETL: Product Supabase → metrics.product_dau_snapshot.
+  # Inert until SUPABASE_PRODUCT_URL + SUPABASE_PRODUCT_READONLY_ETL_KEY are
+  # provisioned for the minion-worker (D-MAX per governance/HITL.md). Until
+  # then the worker logs deferred_no_product_supabase_key on each fire.
+  - id: etl-product-dau-hourly
+    cron: "5 * * * *"
+    description: "Hourly ETL of Product DAU snapshot to metrics.product_dau_snapshot"
+    skill: etl-product-dau-snapshot
+    enabled_when_mode: [hybrid, full_api]
+    requires_api: supabase_product_read
+    fallback: queue_for_founder_review
+    cost_estimate: $0.00 per run
+
+  # Cross-Tier Consistency Engine — L3 nightly sweep (v1.0b).
+  # Inserts pending consistency_checks rows for each L3 invariant. Actual check
+  # execution against live DB (with helper RPC functions) is wired in v1.0c.
+  - id: consistency-sweep-nightly
+    cron: "0 3 * * *"
+    description: "Nightly L3 sweep: insert pending consistency_checks rows for each L3 invariant"
+    skill: consistency-sweep
+    cost_estimate: $0.00 per run
+
+  # === Maintenance schedules ===
+  
+  - id: stale-decision-check
+    cron: "0 9 * * MON"               # Mondays 9 AM
+    description: "Identify decisions needing review (Bài #15)"
+    skill: stale-decision-detector
+    enabled_when_mode: [hybrid, full_api]
+  
+  - id: data-retention-scan
+    cron: "0 3 * * *"                 # Daily 3 AM
+    description: "GDPR data retention enforcement (Bài #16)"
+    skill: data-retention-scanner
+  
+  - id: ingestion-source-poll
+    cron: "*/30 * * * *"              # Every 30 min
+    description: "Poll active ingestion sources (Bài #18)"
+    skill: ingestion-source-poller
+    enabled_when_mode: [hybrid, full_api]
+  
+  - id: minion-queue-cleanup
+    cron: "0 4 * * *"                 # Daily 4 AM
+    description: "Cleanup completed Minion jobs > 30 days (Bài #5)"
+    skill: minion-queue-cleaner
+
+# ============================================================================
+# Customization checklist
+# ============================================================================
+# After bootstrap, customize:
+# 1. Update timezone (above)
+# 2. Add domain-specific schedules in {{ADD_DOMAIN_SCHEDULES_HERE}} section
+# 3. Disable schedules not relevant to your project
+# 4. Verify cron expressions match founder timezone
