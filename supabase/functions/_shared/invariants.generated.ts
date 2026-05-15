@@ -5,7 +5,7 @@
 // Source version: 1.0.0
 // Invariant count: 14
 // By layer: L1=3 L2=7 L3=4
-// Generated at: 2026-05-14T17:11:08.681Z
+// Generated at: 2026-05-15T17:52:40.667Z
 
 import type { Invariant } from "./invariants.ts";
 
@@ -147,7 +147,7 @@ export const ALL_INVARIANTS: Invariant[] = [
   },
   {
     "id": "roles-skills-exist",
-    "description": "Every skill mentioned in governance/ROLES.md must exist under 05-ai-ops/skills/",
+    "description": "Every skill mentioned in governance/ROLES.md must exist under 06-ai-ops/skills/",
     "kind": "subset",
     "layer": "L2",
     "source": {
@@ -157,7 +157,7 @@ export const ALL_INVARIANTS: Invariant[] = [
     },
     "target": {
       "tier": 1,
-      "ref": "05-ai-ops/skills/",
+      "ref": "06-ai-ops/skills/",
       "query": "ls"
     },
     "severity": "warn",
@@ -216,7 +216,7 @@ export const ALL_INVARIANTS: Invariant[] = [
     },
     "target": {
       "tier": 1,
-      "ref": "supabase/migrations/, supabase/functions/, 05-ai-ops/skills/",
+      "ref": "supabase/migrations/, supabase/functions/, 06-ai-ops/skills/",
       "query": "regex:event_type[\"':\\s]+([a-z][a-z0-9._-]+)"
     },
     "severity": "warn",

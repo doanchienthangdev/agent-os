@@ -54,7 +54,7 @@ SKILL_REGISTRY["my-skill-name"] = async (run) => {
 };
 ```
 
-Long-term, skills live as TypeScript modules under `05-ai-ops/skills/<name>/`
+Long-term, skills live as TypeScript modules under `06-ai-ops/skills/<name>/`
 and are bundled at deploy time. The Wave 2 scaffold inlines them for clarity.
 
 ## File map

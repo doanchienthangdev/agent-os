@@ -3,7 +3,7 @@
 > **A boilerplate for the operating substrate of an AI-native organization.**
 > 4-tier truth model + governance + memory + economic instrumentation + cross-tier consistency. Fork it, customize it for your org, run it.
 
-[![status: v0.1](https://img.shields.io/badge/status-v0.1-yellow)]() [![license: UNLICENSED](https://img.shields.io/badge/license-UNLICENSED-lightgrey)]()
+[![status: v0.2](https://img.shields.io/badge/status-v0.2-yellow)]() [![license: UNLICENSED](https://img.shields.io/badge/license-UNLICENSED-lightgrey)]()
 
 ---
 
@@ -17,20 +17,25 @@ It's extracted from a real, in-flight Operating-OS (`ritsu-works`) and scrubbed 
 
 - **4-tier truth model** — Tier 1 (PR-governed git), Tier 2 (Postgres / Supabase), Tier 3 (storage), Tier 4 (rebuildable derived). Every kind of company truth has one canonical home.
 - **HITL tier policy** — A / B / C / D-Std / D-MAX. The agent knows which actions can be autonomous and which require ceremony, codified in a 398-line policy doc.
-- **22 sequential Supabase migrations** — `ops.tasks`, `ops.agent_runs` (with HITL audit immutability), `ops.run_summaries` (memory), `ops.cost_attributions` (economic), `ops.consistency_checks` (cross-tier engine), `ops.kpi_snapshots`, knowledge graph tables, RLS policies, pg_cron setup. Schema-in-git, data-in-DB.
+- **24 sequential Supabase migrations** — `ops.tasks`, `ops.agent_runs` (with HITL audit immutability + persona attribution), `ops.run_summaries` (memory), `ops.cost_attributions` (economic), `ops.consistency_checks` (cross-tier engine), `ops.capability_runs` (with update-lock + lineage view), `ops.kpi_snapshots`, knowledge graph tables, RLS policies, pg_cron setup. Schema-in-git, data-in-DB.
 - **Strategy E memory architecture** — episodic recall via `ops.run_summaries` queried at task start. No file-based memory tool by default.
 - **Economic instrumentation** — per-role budgets with 80% / 100% / 150% escalation, daily reconciliation against your LLM provider's billing API.
-- **Cross-tier consistency engine** — L1/L2/L3 invariant sweeps that catch drift between Tier 1 docs and Tier 2 reality before it bites you.
+- **Cross-tier consistency engine** — L1/L2/L3 invariant sweeps that catch drift between Tier 1 docs and Tier 2 reality before it bites you. Includes a pillar-naming convention validator (`validate-pillar-numbering`) and 5 other cross-tier validators.
+- **Workforce persona framework** — façade layer for C-suite identities (CEO/CTO/CGO/CPO/...) bound to technical roles. Schema + validator + hook specs + `ops.agent_runs.persona_slug` attribution. Ships with one placeholder persona (`gpt`); replace with your real C-suite as your org grows. See `notes/WORKFORCE-PERSONAS-USAGE.md`.
+- **Capability Lifecycle Architecture (CLA)** — `/cla` slash command + `@cla` subagent + 10 phase skills + 6 sub-flow SOPs (fix/extend/revise/tune/deprecate) for shipping new capabilities through an 8-phase ceremony with HITL gating. See `notes/CLA-USAGE.md`.
 - **Schedule dispatcher + minion-worker** — pg_cron-driven workers that pick up scheduled SOPs and run them.
-- **Hooks framework** — 9 pre-tool hooks for safety (dangerous bash, secrets access, customer messages, publish gates, edit-tier1 protection, budget pre-check).
-- **Skills framework** — 8 starter skills (episodic-recall, task-decompose, cost-report, monthly-learning-review, etc.) and a SKILL.md convention compatible with Claude Code's progressive-disclosure model.
+- **Hooks framework** — 11 pre/post hooks for safety + persona attribution.
+- **Skills framework** — 18 starter skills (episodic-recall, task-decompose, cost-report, capability-lifecycle/* — 10 phase skills, etc.) and a SKILL.md convention compatible with Claude Code's progressive-disclosure model.
 - **Knowledge graph** — pgvector HNSW embeddings inside Postgres, populated from wiki notes and Tier 3 artifacts.
+- **Init wizard with custom-pillar mode** — `pnpm init` lets you keep the starter B2C-product pillar set OR define your own pillar layout for film studios, personal-OS, agencies, e-commerce, etc.
 
 ### What it deliberately does NOT include
 
-- **Empty pillars.** `01-growth`, `02-customer`, `03-product`, `04-content`, `06-finance`, `07-compliance`, `08-integrations` ship as empty README stubs. You fill in the pillars relevant to your org. **If you don't need a pillar, delete the directory.**
+- **Specific pillar contents.** `01-growth`, `02-customer`, `03-product`, `04-content`, `06-finance`, `07-compliance`, `08-integrations` ship as empty README stubs IF you choose the starter set. You can also pick custom pillars at init time. See [`notes/PILLAR-EXAMPLES.md`](./notes/PILLAR-EXAMPLES.md).
 - **Industry-specific roles.** The starter `governance/ROLES.md` defines 3 generic roles (`gps`, `content-drafter`, `etl-runner`). Add specialist roles as your workforce grows.
-- **A live workforce.** This boilerplate is **load-tested in shape, not in operation**. The architecture is sound, but no single pillar has run end-to-end yet. Picking one pillar and running it through the loop is your first test.
+- **Specific personas.** Ships with a `gpt` placeholder persona. Add your real C-suite (CEO, CTO, etc.) per `notes/WORKFORCE-PERSONAS-USAGE.md`.
+- **A live workforce.** This boilerplate is **load-tested in shape, not in operation**. The substrate (architecture, schemas, validators, CLA, persona framework) is sound, but no single pillar has run an end-to-end loop yet. Picking one pillar and running it through is your first test.
+- **Persona hook RUNTIME.** Persona invocations work but `ops.agent_runs.persona_slug` stays NULL until you implement the `pre-persona-resolve` + `post-persona-log` hooks. Spec-only by design.
 
 ---
 
@@ -87,7 +92,7 @@ The full data contract lives in [`knowledge/manifest.yaml`](./knowledge/manifest
 02-customer/        customer ops pillar (stub)
 03-product/         product ops pillar (stub)
 04-content/         content production pillar (stub)
-05-ai-ops/          THE meta-framework — skills, SOPs, the workforce that builds the workforce
+06-ai-ops/          THE meta-framework — skills, SOPs, the workforce that builds the workforce
 06-finance/         finance & accounting pillar (stub)
 07-compliance/      trust & safety, privacy, AI law (stub)
 08-integrations/    external APIs, MCP server hosting (stub)
@@ -132,7 +137,10 @@ UNLICENSED — see [`LICENSE`](./LICENSE). The repo is publicly visible so other
 
 In order:
 
-1. **[`CLAUDE.md`](./CLAUDE.md)** — the agent-onboarding contract; loaded on every session start.
+1. **[`notes/PILLAR-EXAMPLES.md`](./notes/PILLAR-EXAMPLES.md)** — pick a pillar layout that fits your org (or use the starter set).
+2. **[`notes/WORKFORCE-PERSONAS-USAGE.md`](./notes/WORKFORCE-PERSONAS-USAGE.md)** — define your C-suite personas.
+3. **[`notes/CLA-USAGE.md`](./notes/CLA-USAGE.md)** — use `/cla` to ship your first capability.
+4. **[`CLAUDE.md`](./CLAUDE.md)** — the agent-onboarding contract; loaded on every session start.
 2. **[`knowledge/manifest.yaml`](./knowledge/manifest.yaml)** — the truth-tier data contract.
 3. **[`governance/HITL.md`](./governance/HITL.md)** — the safety model. Non-negotiable.
 4. **[`governance/ROLES.md`](./governance/ROLES.md)** — role permissions schema + 3 starter roles.

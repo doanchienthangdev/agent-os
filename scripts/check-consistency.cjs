@@ -205,12 +205,18 @@ async function main() {
   const r0 = runNodeCheck('validate-tier1.cjs', path.join(REPO_ROOT, 'scripts/validate-tier1.cjs'));
   if (!r0.passed) criticalFailures += 1;
 
+  header('L1 — Pillar naming convention');
+  const rPillar = runNodeCheck('validate-pillar-numbering.cjs', path.join(CT_DIR, 'validate-pillar-numbering.cjs'));
+  if (!rPillar.passed) criticalFailures += 1;
+
   // === L2 critical ===================================================
   header('L2 — cross-tier validators (critical)');
   for (const v of [
     ['validate-manifest-db.cjs', 'manifest ↔ migrations'],
     ['validate-skills-references.cjs', '.from() ↔ migrations'],
     ['validate-schedules-skills.cjs', 'schedules ↔ skill registry'],
+    ['validate-personas.cjs', 'workforce-personas ↔ ROLES.md ↔ runtime'],
+    ['validate-cla-routing-keywords.cjs', 'cla-routing-keywords ↔ personas/roles'],
   ]) {
     const r = runNodeCheck(v[1], path.join(CT_DIR, v[0]));
     if (!r.passed) criticalFailures += 1;

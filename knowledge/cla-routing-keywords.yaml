@@ -1,0 +1,70 @@
+# CLA Routing Keywords — boilerplate
+#
+# Tier 1 file mapping problem-statement keywords → CxO persona + fallback role.
+# Read by /cla command Phase 2 (Domain Deep-Dive) to auto-route the problem to
+# the right specialist chief.
+#
+# Resolution rule:
+#   1. /cla scans problem.md text against `routes.*.keywords` (case-insensitive
+#      substring match).
+#   2. If exactly 1 route matches → dispatch to that route's `cxo`.
+#      - If the bound persona is `status: planned` (not yet active),
+#        fall back to dispatching the route's `fallback_role` instead.
+#   3. If 0 routes match OR multiple routes match → use `ambiguous_fallback`.
+#
+# Editing rules:
+#   - Adding a new route: pick a unique domain slug; pick a CxO that is in
+#     knowledge/workforce-personas.yaml (any status); pick a fallback_role
+#     that is in governance/ROLES.md.
+#   - Keywords must NOT overlap across routes (the validator catches this).
+#
+# === Boilerplate state ===
+# This file ships with ONE generic route mapping all keywords to the placeholder
+# `gpt` persona + `gps` role. Replace with your org's real CxO routes when you
+# add real personas (e.g., growth → cgo, product → cpo, code → cto, etc.).
+#
+# Validators (L2 critical):
+#   - scripts/cross-tier/validate-cla-routing-keywords.cjs
+
+version: "1.0.0"
+owner: founder
+last_updated: "2026-05-15"
+
+routes:
+  general:
+    keywords:
+      - feature
+      - capability
+      - workflow
+      - process
+      - improvement
+      - build
+    cxo: gpt
+    fallback_role: gps
+
+# When no route matches OR multiple routes tie, the framework defers to the founder.
+# Other valid values per schema: `muse_panel`, `ceo_synthesis`. `founder_decides`
+# is the safest boilerplate default (works without a CEO persona or muse panel).
+ambiguous_fallback: founder_decides
+
+# === Future-state example routes (commented; uncomment + customize) ===
+#
+#  growth:
+#    keywords: [acquisition, funnel, lead, conversion, ICP, channel]
+#    cxo: cgo
+#    fallback_role: growth-orchestrator
+#
+#  product:
+#    keywords: [feature, roadmap, user-research, wedge, build-loop]
+#    cxo: cpo
+#    fallback_role: product-orchestrator
+#
+#  code:
+#    keywords: [refactor, migration, performance, debt, architecture]
+#    cxo: cto
+#    fallback_role: code-reviewer
+#
+#  marketing:
+#    keywords: [brand, content, messaging, positioning, voice]
+#    cxo: cmo
+#    fallback_role: content-drafter

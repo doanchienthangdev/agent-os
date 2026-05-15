@@ -2,6 +2,19 @@
 
 > First-mile work after cloning agent-os for a new organization. Append-only; do not delete completed items — move to a `## Done` section instead.
 
+## P0 — Decide pillar layout BEFORE running init wizard
+
+### A0 — Pick your pillar set
+The boilerplate ships 7 starter pillars (B2C product company shape) but the wizard
+also offers a CUSTOM mode where you supply your own pillar slugs. Decide before
+running `pnpm init`. See [`notes/PILLAR-EXAMPLES.md`](./notes/PILLAR-EXAMPLES.md)
+for example layouts (B2B SaaS, AI film studio, personal-OS, agency, e-commerce, etc.).
+
+**Effort:** S (~10 min decision).
+**Why:** Renaming pillars after init requires manual cleanup.
+
+---
+
 ## P1 — First session after `pnpm init`
 
 ### A1 — Fill in 00-charter
@@ -24,6 +37,31 @@ The boilerplate ships with 7 pillar slots (`01-growth, 02-customer, 03-product, 
 **Why:** empty pillars create cognitive overhead and false expectations.
 **Effort:** S (~15 min decision + cleanup).
 **Surfaced from:** boilerplate convention.
+
+---
+
+### A2.5 — Add real personas (replace `gpt` placeholder)
+The boilerplate ships ONE placeholder persona (`gpt`) bound to the `gps` role.
+Replace with your real C-suite (typically `ceo` always; `cto` if shipping code;
+`cgo` if doing GTM; `cpo` if shipping product; `cmo`, `cso`, `cfo`, etc. as you
+grow). See [`notes/WORKFORCE-PERSONAS-USAGE.md`](./notes/WORKFORCE-PERSONAS-USAGE.md)
+for the full guide.
+
+**Why:** Personas are the founder-facing interface (`/ceo`, `@cto`). Until real
+personas exist, you can only invoke `/gpt`.
+**Effort:** S per persona (~15 min CC). M if you also implement the runtime hooks
+(persona attribution to `ops.agent_runs.persona_slug`).
+
+---
+
+### A2.6 — Update `cla-routing-keywords.yaml` to match your real personas
+The boilerplate ships ONE placeholder route (`general` → `gpt`). Add per-domain
+routes (`growth` → `cgo`, `product` → `cpo`, `code` → `cto`, etc.) once your
+real personas are in. See [`notes/CLA-USAGE.md`](./notes/CLA-USAGE.md).
+
+**Why:** `/cla propose` uses these routes to dispatch domain analysis to the
+right CxO. Without real routes, every CLA proposal falls back to founder.
+**Effort:** S (~15 min) once personas exist.
 
 ---
 
@@ -82,6 +120,28 @@ The boilerplate ships pg_cron setup for the minion-worker tick only. As you add 
 
 ### C4 — Audit `notes/SUBSTITUTION-GUIDE.md` and remove unused placeholders
 After init, some `${PLACEHOLDER}` variables you didn't use may still litter Tier 1 files. Optional cleanup pass.
+
+---
+
+### C5 — Implement persona hook runtime
+The persona framework ships with hook SPECS (`.claude/hooks/{pre-persona-resolve,post-persona-log}.md`)
+but no runtime code. Until implemented, persona invocations work but
+`ops.agent_runs.persona_slug` stays NULL. See [`notes/WORKFORCE-PERSONAS-USAGE.md`](./notes/WORKFORCE-PERSONAS-USAGE.md)
+"Hook implementation gap" section for the implementation contract.
+
+**Effort:** L (~30-50h to implement properly with tests).
+**When:** Defer until you have ≥3 personas active and want to compare effectiveness.
+
+---
+
+### C6 — Use `/cla propose` for your first capability
+After your charter + first persona + first pillar are in, ship your first real
+capability via the CLA workflow. This exercises the most substrate (8 phases of
+ceremony, HITL gating, cost tracking, persona dispatch, audit logging).
+
+**Effort:** L per capability (~quarter for first; smaller after).
+**Why:** The architecture is theory until a capability ships through it. CLA is
+your fastest path to that proof.
 
 ---
 

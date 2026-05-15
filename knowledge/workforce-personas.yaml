@@ -1,0 +1,122 @@
+# Workforce Persona Registry — boilerplate
+#
+# Source of truth for the C-suite persona → technical role binding. Personas
+# are FAÇADE — they do NOT redeclare permissions, budgets, secrets, or HITL
+# tiers. Those live in governance/ROLES.md against the bound role.
+#
+# Resolution rule: when the runtime sees /<slug> or @<slug>:
+#   1. Look up persona here → find binds_to.primary.
+#   2. Apply ROLES.md policy for the bound role.
+#   3. Persona may NARROW its default HITL max below the role's ceiling.
+#      Persona may NEVER broaden any permission.
+#
+# Validators (run via `pnpm check`):
+#   - validate-personas.cjs (L2 critical)
+#
+# Schema: knowledge/schemas/workforce-personas.schema.json
+#
+# === Boilerplate state ===
+# This file ships with ONE placeholder persona (`gpt`) bound to the `gps` role.
+# When you populate your org, replace `gpt` with your actual personas (typically
+# CEO/CTO/CGO/CPO + others). See notes/WORKFORCE-PERSONAS-USAGE.md for a guide.
+#
+# Constraint: every persona slug MUST match `^[a-z]{3,5}$` (3-5 lowercase letters).
+# Constraint: every binds_to.primary MUST be a role defined in governance/ROLES.md.
+# Constraint: governance/ROLES.md MUST list this persona slug under the role's
+#             `personas_bound` field (bidirectional integrity).
+
+version: 0.1.0
+last_updated: "2026-05-15"
+owner: founder
+current_phase: 1   # Phase 1 personas are active; later phases ship as you grow
+
+# Naming policy enforced by schema + validator
+# (3-5 letters keeps slash commands typeable. Most C-suite roles fit naturally:
+#  ceo, cto, cgo, cpo, cmo, cso, cco, cfo, etc.)
+naming_policy:
+  slug_pattern: "^[a-z]{3,5}$"
+  slash_command_pattern: "^/[a-z]{3,5}$"
+  mention_pattern: "^@[a-z]{3,5}$"
+  no_prefix: "Persona slugs MUST NOT carry a numeric or pillar prefix."
+
+# Personas the org has chosen NOT to roster (documentation, not a constraint)
+not_in_roster: []
+
+# ---------------------------------------------------------------------------
+# Phase 1 personas (active)
+# ---------------------------------------------------------------------------
+
+personas:
+
+  gpt:
+    full_name: Generic Persona Template
+    phase: 1
+    status: active
+    pillar_home: 06-ai-ops/workforce-personas/gpt/
+    binds_to:
+      primary: gps
+      contextual: []
+    invocations:
+      slash_command: /gpt
+      subagent_mention: "@gpt"
+    routing_targets: []
+    voice_profile: bootstrap-placeholder
+    default_hitl_max: C
+    notify_founder: true
+    notes: |
+      Boilerplate placeholder persona. Bound to the generic-purpose-steward
+      role (gps) so the persona framework validates cleanly out of the box.
+
+      To make this useful for your org:
+
+      1. Decide which C-suite personas your org needs (CEO is universal; CTO
+         if you ship code; CGO if you do GTM; CPO if you ship product; CMO
+         for marketing-heavy orgs; CFO for capital-intensive orgs; etc.).
+      2. For each persona, add a block here matching the schema.
+      3. For each persona, ensure the `binds_to.primary` role exists in
+         governance/ROLES.md and that role lists the persona under
+         `personas_bound: [<slug>]`.
+      4. For each persona, create the spec folder
+         06-ai-ops/workforce-personas/<slug>/ with the canonical 8 files
+         (README, PERSONA, playbook, routing-matrix, kpis, agent, command,
+         dossier).
+      5. Optionally create runtime files .claude/agents/<slug>.md and
+         .claude/commands/<slug>.md for slash-command and subagent dispatch.
+      6. Once your real personas are in, you can delete `gpt` (and its folder)
+         — but only after at least one other persona is `status: active`.
+
+      See notes/WORKFORCE-PERSONAS-USAGE.md for the full guide.
+
+# ---------------------------------------------------------------------------
+# Future-phase personas (commented examples — uncomment + customize)
+# ---------------------------------------------------------------------------
+#
+#   ceo:
+#     full_name: Chief Executive Officer
+#     phase: 1
+#     status: active
+#     pillar_home: 06-ai-ops/workforce-personas/ceo/
+#     binds_to:
+#       primary: gps
+#     invocations:
+#       slash_command: /ceo
+#       subagent_mention: "@ceo"
+#     routing_targets: [cto, cgo, cpo]
+#     voice_profile: strategic-terse-decisive
+#     default_hitl_max: C
+#     notify_founder: true
+#
+#   cto:
+#     full_name: Chief Technology Officer
+#     phase: 1
+#     status: active
+#     pillar_home: 06-ai-ops/workforce-personas/cto/
+#     binds_to:
+#       primary: code-reviewer
+#     invocations:
+#       slash_command: /cto
+#       subagent_mention: "@cto"
+#     routing_targets: []
+#     voice_profile: senior-eng-cite-line-numbers
+#     default_hitl_max: B
+#     notify_founder: false

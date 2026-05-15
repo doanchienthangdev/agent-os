@@ -147,11 +147,11 @@ The CLI will prompt for the Postgres password. The founder enters it; you do NOT
 supabase db diff --schema ops,public --linked
 ```
 
-Show the founder the full output. Explain in plain language what the migrations will do (22 sequential migrations creating ops.tasks, ops.agent_runs, HITL audit trigger, memory tables, economic tables, knowledge graph, RLS policies, pg_cron setup, consistency engine).
+Show the founder the full output. Explain in plain language what the migrations will do (24 sequential migrations creating ops.tasks, ops.agent_runs with HITL audit + persona attribution, memory tables, economic tables, knowledge graph, RLS policies, pg_cron setup, consistency engine, capability_runs with update lock + lineage view).
 
 ### 4.3 Wait for explicit approval
 
-Use AskUserQuestion. The question is exactly: "Apply these 22 migrations to your Supabase project `${SUPABASE_OPS_PROJECT_REF}`? This is irreversible without project reset."
+Use AskUserQuestion. The question is exactly: "Apply these 24 migrations to your Supabase project `${SUPABASE_OPS_PROJECT_REF}`? This is irreversible without project reset."
 
 Options:
 - "Yes, apply"
@@ -287,7 +287,7 @@ Tell the founder, in this order:
 
 ### What's now live
 
-- `${SUPABASE_OPS_PROJECT_NAME}` Supabase project linked, 22 migrations applied
+- `${SUPABASE_OPS_PROJECT_NAME}` Supabase project linked, 24 migrations applied
 - Tables: ops.* (~30), public.* (~5), metrics.* (~1) — list them
 - Edge functions deployed: [list, or note skipped]
 - Cron jobs active: [list, or note local-mode skipped]
@@ -295,7 +295,7 @@ Tell the founder, in this order:
 
 ### What's NOT live (deliberately)
 
-- Pillars 01-08 except 05-ai-ops are empty stubs. No agent role has run an end-to-end loop yet.
+- Pillars 01-08 except 06-ai-ops are empty stubs. No agent role has run an end-to-end loop yet.
 - No external integrations beyond Anthropic API. No Telegram bot. No social media tokens. No Stripe.
 - No populated wiki, no charter content beyond stubs in `00-charter/`.
 
@@ -304,17 +304,21 @@ Tell the founder, in this order:
 The architecture is theory until a pillar runs end-to-end. Order:
 
 1. **Fill in `00-charter/`** — at minimum `charter.md` (mission, values), `product.md` (positioning), `brand_voice.md` (tone). 30-60 minutes total. Without this, agent reasoning has no grounding.
-2. **Pick ONE pillar to prove** — recommendation: `02-customer/support-agent` (exercises HITL, cost, memory, knowledge graph) or `01-growth/growth-orchestrator` (exercises ETL, content, publishing).
-3. **Add the role to `governance/ROLES.md`** — copy the template from one of the 3 starter roles.
-4. **Provision the role's identity** — bot account, secrets — per `governance/IDENTITY.md`.
-5. **Write the role's first SOP** — under `<pillar>/sops/SOP-<PILLAR>-001-<name>/`.
-6. **Run a real workflow** — use the role for an actual task. Watch `ops.agent_runs` populate. Verify `episodic-recall` returns useful context after 5+ runs.
+2. **Choose your pillars** — if you didn't already use the wizard's custom-pillar mode, decide whether the starter set fits your org or you need to rename/delete pillars. See [`notes/PILLAR-EXAMPLES.md`](./notes/PILLAR-EXAMPLES.md).
+3. **Add real personas** — replace the `gpt` placeholder persona with real C-suite (typically `ceo`, plus `cto` if shipping code, `cgo` if doing GTM, `cpo` if shipping product). See [`notes/WORKFORCE-PERSONAS-USAGE.md`](./notes/WORKFORCE-PERSONAS-USAGE.md). After adding, run `pnpm check` to verify the persona framework still validates.
+4. **Pick ONE pillar to prove** — recommendation: customer-support or growth-orchestrator (exercises the most substrate: HITL, cost, memory, knowledge graph, episodic recall).
+5. **Add the role + persona** for that pillar's primary work. Update `governance/ROLES.md` (role definition) + `knowledge/workforce-personas.yaml` (persona binding) + create runtime files in `.claude/agents/` and `.claude/commands/`.
+6. **Use `/cla propose`** for the FIRST capability you ship in that pillar. The CLA workflow walks you through 8 phases of structured ceremony with HITL gating. See [`notes/CLA-USAGE.md`](./notes/CLA-USAGE.md).
+7. **Run real workflows** — use the role for actual tasks. Watch `ops.agent_runs` populate. Verify `episodic-recall` returns useful context after 5+ runs.
 
 Repeat for the next pillar after the first is stable.
 
 ### Where to read
 
-- `05-ai-ops/README.md` — how skills work
+- [`notes/CLA-USAGE.md`](./notes/CLA-USAGE.md) — how to use `/cla` for new capabilities
+- [`notes/WORKFORCE-PERSONAS-USAGE.md`](./notes/WORKFORCE-PERSONAS-USAGE.md) — how the persona framework works
+- [`notes/PILLAR-EXAMPLES.md`](./notes/PILLAR-EXAMPLES.md) — pillar layouts for different org types
+- `06-ai-ops/README.md` — how skills work
 - `knowledge/manifest.yaml` — where every kind of data lives
 - `knowledge/economic-architecture.md` — budget calibration after first month
 - `knowledge/memory-architecture.md` — Strategy E episodic recall

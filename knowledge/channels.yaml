@@ -7,7 +7,7 @@
 # Each channel:
 # - Has type (video, social, email, dashboard, etc.)
 # - Has audience priority (primary, secondary, tertiary)
-# - Maps to SurfaceAdapter implementation in 05-ai-ops/surface-adapters/
+# - Maps to SurfaceAdapter implementation in 06-ai-ops/surface-adapters/
 # ============================================================================
 
 version: "1.0.0"

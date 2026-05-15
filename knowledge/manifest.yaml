@@ -52,7 +52,7 @@ tier1_canonical:
       status: planned
       note: Vietnam-specific tax & compliance context.
     ai_ops:
-      path: 05-ai-ops/
+      path: 06-ai-ops/
       status: planned
     trust_safety:
       path: 06-trust-safety/
@@ -486,7 +486,7 @@ tier4_derived:
         rebuild_script: scripts/sync/rebuild-charter-embeddings.sh
         status: planned
       - name: skills_embeddings
-        source: 05-ai-ops/skills/
+        source: 06-ai-ops/skills/
         source_kind: skill
         rebuild_script: scripts/sync/rebuild-skills-embeddings.sh
         status: planned

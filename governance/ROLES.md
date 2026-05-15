@@ -26,7 +26,7 @@ Every role has the following attributes:
 ```yaml
 role: <slug>
 purpose: <one-sentence description>
-home_pillar: <00-charter | 01-growth | 02-customer | 03-product | 04-content | 05-ai-ops | 06-finance | 07-compliance | 08-integrations | cross-cutting>
+home_pillar: <00-charter | 01-growth | 02-customer | 03-product | 04-content | 06-ai-ops | 06-finance | 07-compliance | 08-integrations | cross-cutting>
 permissions:
   tier1_paths:           # which paths in this repo it can edit (PR-only)
   tier2_schemas_read:    # which Supabase schemas it can SELECT
@@ -84,6 +84,7 @@ The orchestrator. Routes work to specialist roles. The role that interfaces with
 role: gps
 purpose: Receive founder requests, decompose into tasks, route to specialist roles, report back.
 home_pillar: cross-cutting
+personas_bound: [gpt]   # boilerplate placeholder — replace with real personas as you roster them
 permissions:
   tier1_paths:
     - "wiki/**"
@@ -200,7 +201,7 @@ escalation_role: gps
 ```yaml
 role: etl-runner
 purpose: Run scheduled ETL jobs that move data between tiers. Read product DB, write ops mirror, rebuild embeddings.
-home_pillar: 05-ai-ops
+home_pillar: 06-ai-ops
 permissions:
   tier1_paths: []
   tier2_schemas_read:

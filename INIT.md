@@ -2,6 +2,13 @@
 
 > Run after cloning agent-os to customize the substrate for your organization.
 
+## v0.2 changes
+
+- New step: **Pillar mode** — choose between (a) starter set with pick-and-keep, (b) custom pillars (you supply the list), or (c) keep all starters.
+- New persona framework: an `gpt` placeholder persona is created automatically; replace with real C-suite per `notes/WORKFORCE-PERSONAS-USAGE.md`.
+- New CLA framework: `/cla propose` is wired in; use it for your first real capability per `notes/CLA-USAGE.md`.
+- 24 migrations now (was 22) — adds `agent_runs.persona_slug` (00024) and `capability_runs` update lock (00025).
+
 ## When to run
 
 - Right after `git clone && pnpm install`, before any other work.
@@ -37,7 +44,7 @@ The wizard collects the following inputs interactively:
 | `OPS_REGION` | "us-west-1" | manifest |
 | `OPS_REGION_HUMAN` | "US West / N. California" | manifest comment |
 | `DEPLOYMENT_MODE` | "local" or "production" | .env.local; cron bootstrap conditional |
-| `PILLARS_ENABLED` | ["01-growth", "02-customer", "05-ai-ops"] | manifest pillar status; deletes unselected pillar dirs |
+| `PILLARS_ENABLED` | ["01-growth", "02-customer", "06-ai-ops"] | manifest pillar status; deletes unselected pillar dirs |
 | `ORG_SLUG_UPPER` | "FILMSTUDIO" | env var suffix for social tokens |
 | `YEAR` | "2026" | LICENSE copyright |
 
@@ -62,6 +69,8 @@ After collecting inputs, the wizard:
 - **Does NOT create GitHub bot accounts.** You create those manually; supply usernames in `governance/IDENTITY.md` later.
 - **Does NOT push to GitHub.** First commit + push is your decision.
 - **Does NOT read or write secrets to any external secret manager.** It writes to a local `.env.local` file only.
+- **Does NOT define real personas for you.** You get the `gpt` placeholder; replace with your C-suite per `notes/WORKFORCE-PERSONAS-USAGE.md`.
+- **Does NOT populate the capability registry.** Use `/cla propose` to ship your first real capability per `notes/CLA-USAGE.md`.
 
 ## Idempotency
 

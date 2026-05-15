@@ -41,6 +41,17 @@ const SKIP_FILES = new Set([
   "08-integrations/README.md",
   // scripts/_extract is our own tooling — don't scrub ourselves
   "scripts/_extract/scrub.cjs",
+  // wizard's prompt strings contain literal example values (e.g., "vi-VN", "ap-south-1")
+  // that must NOT be substituted (they're shown to users as guidance)
+  "scripts/init.cjs",
+  // generated docs that intentionally reference ritsu-works as the source repo
+  "AGENT-OS-README.md",
+  "DEPLOY.md",
+  "INIT.md",
+  "notes/SOURCE-PROVENANCE.md",
+  "notes/SUBSTITUTION-GUIDE.md",
+  // .archives is gitignored anyway but skip for consistency
+  ".archives/upgrades-from-ritsu/PLAN.md",
 ]);
 
 // Directories never walked

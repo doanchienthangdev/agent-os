@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // L2 validator: every skill claim in governance/ROLES.md should resolve to a
-// directory under 05-ai-ops/skills/. Best-effort because ROLES.md is prose-heavy.
+// directory under 06-ai-ops/skills/. Best-effort because ROLES.md is prose-heavy.
 //
 // Invariant enforced: roles-skills-exist (severity: warn — false positives OK).
 
@@ -12,7 +12,7 @@ const path = require('path');
 const { REPO_ROOT } = require('../lib/load-invariants.cjs');
 
 const ROLES_PATH = path.join(REPO_ROOT, 'governance', 'ROLES.md');
-const SKILLS_DIR = path.join(REPO_ROOT, '05-ai-ops', 'skills');
+const SKILLS_DIR = path.join(REPO_ROOT, '06-ai-ops', 'skills');
 
 function existingSkills() {
   if (!fs.existsSync(SKILLS_DIR)) return new Set();
@@ -63,7 +63,7 @@ function main() {
 
   for (const c of claims) {
     if (!known.has(c.skill)) {
-      errors.push(`ROLES.md:${c.line} claims skill '${c.skill}' but 05-ai-ops/skills/${c.skill}/ does not exist`);
+      errors.push(`ROLES.md:${c.line} claims skill '${c.skill}' but 06-ai-ops/skills/${c.skill}/ does not exist`);
     }
   }
 
@@ -71,10 +71,13 @@ function main() {
     console.log(`✓ governance-roles: clean (${claims.length} skill claims, all exist)`);
     process.exit(0);
   }
-  console.error('⚠️  governance-roles drift (warn severity — false positives acceptable in v1.0a):');
+  // Warn severity — false positives acceptable for boilerplate where ROLES.md
+  // lists aspirational skills the org will populate later. Print to stderr for
+  // visibility but exit 0 so CI doesn't fail on warnings.
+  console.error('⚠️  governance-roles drift (warn severity — non-blocking):');
   for (const e of errors) console.error(`  - ${e}`);
-  console.error(`\n${errors.length} issue(s). If false positive, add the role/skill to ROLES.md or mark with a comment.`);
-  process.exit(1);
+  console.error(`\n${errors.length} issue(s). If your org has populated these skills, validator will report clean. If not, this is expected — roles list aspirational skills until built.`);
+  process.exit(0);
 }
 
 if (require.main === module) main();

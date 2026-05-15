@@ -1,0 +1,149 @@
+---
+name: dependency-scanner
+description: Scans every wiki/capabilities/*/spec.md + knowledge/capability-registry.yaml `dependencies` block to find capabilities that reference a given capability_id. Returns a reverse-dependency list. Used by `/cla extend` (warning) and `/cla deprecate` (mandatory blocker) to surface impact before mutation. Deterministic — no LLM call. Detects circular dependencies and unreferenced capabilities.
+---
+
+# Dependency Scanner (CLA v1.1)
+
+## When to use
+
+- `/cla extend <id>` Phase 3 — informational; surface dependent capabilities
+- `/cla deprecate <id>` Phase 3 — mandatory blocker; must complete before Phase 8
+- `@cla deps <id>` (bonus subagent verb) — read-only query
+
+## Inputs
+
+- `target_capability_id` — the capability being analyzed
+- `mode` — `extend` | `deprecate` | `query` (changes failure behavior)
+
+## Process — DETERMINISTIC, no LLM
+
+### Step 1 — Enumerate all capability spec.md files
+
+```bash
+find wiki/capabilities -maxdepth 2 -name spec.md -type f
+```
+
+Read each. Skip `_TEMPLATE/spec.md`. Skip files under any subfolder of `<id>` itself (self-references are not dependencies).
+
+### Step 2 — Scan each spec.md text for references
+
+For each spec.md, search for the `target_capability_id` string. Match modes:
+
+| Pattern | Match strength | Confidence |
+|---|---|---|
+| `wiki/capabilities/<id>/` (path reference) | strong | high — explicit path |
+| `\`<id>\`` (backtick code-quoted) | strong | high — explicit ref |
+| `capability \`<id>\`` (prose ref) | strong | high |
+| `<id>` as standalone word (whitespace bounded) | medium | medium — could be coincidence if id is generic |
+| `<id>` substring within other word | weak | low — likely false positive; ignore |
+
+Store each match: `{file_path, line_number, line_text, match_type, confidence}`.
+
+### Step 3 — Cross-reference registry yaml `dependencies` block
+
+Read `knowledge/capability-registry.yaml` § `dependencies` map. If `target_capability_id` appears in any list value (i.e., capability X declares it depends on `target_capability_id`), record as STRONG dependency with confidence: high.
+
+Example:
+```yaml
+dependencies:
+  daily-followup: [lead-acquisition]   # daily-followup depends on lead-acquisition
+```
+
+### Step 4 — Filter by capability state
+
+Look up each found capability's state in `ops.capability_runs WHERE capability_id = <found_id> ORDER BY proposed_at DESC LIMIT 1` (or fallback to registry yaml if DB unreachable):
+
+- State = `operating` or `deployed` → **active dependent** (counts for blocking)
+- State = `superseded` or `deprecated` → **inactive dependent** (informational only; doesn't block)
+- State = `proposed`, `analyzing`, `architecting`, `planning`, `implementing` → **in-flight dependent** (warning, doesn't block but founder should know)
+
+### Step 5 — Detect circular dependencies
+
+For each active dependent X of `target_capability_id`, recursively check if `target_capability_id` depends on X (transitively). If yes, log circular dependency with the cycle path. Always BLOCK on circular regardless of mode.
+
+### Step 6 — Output `dependency-impact.md`
+
+```markdown
+# Dependency Impact: {target_capability_id}
+
+**Generated:** {date}
+**Mode:** {extend | deprecate | query}
+**Scan source:** {N spec.md files} + {M registry entries}
+
+## Active dependents ({N})
+
+| Capability | State | Confidence | Refs (file:line) | Action required |
+|---|---|---|---|---|
+| daily-followup | operating | high | wiki/capabilities/daily-followup/spec.md:47 | Update or deprecate first |
+
+## Inactive dependents ({N})
+
+(superseded/deprecated capabilities still referencing — informational only)
+
+## In-flight dependents ({N})
+
+(capabilities currently in proposed/analyzing/etc. states — warn founder)
+
+## Circular dependencies ({N})
+
+(cycles found through transitive chasing)
+
+## VERDICT
+
+- mode=extend → {WARN | OK}
+  - WARN if any active dependents found; founder ack required
+  - OK if zero active dependents
+- mode=deprecate → {BLOCK | OK}
+  - BLOCK if any active dependents found; founder may override via Tier D-Std
+  - BLOCK always if circular
+  - OK if zero active dependents
+- mode=query → {READ-ONLY}
+```
+
+## Outputs
+
+- `.archives/cla/<target_capability_id>-{mode}-{session_id}/dependency-impact.md`
+- No `ops.cost_attributions` row (deterministic)
+- `ops.events` row: `${ORG_EVENT_NS}.capability.dependency_scan_completed`
+
+## State transition
+
+None directly. Sub-flow advances based on VERDICT.
+
+## HITL
+
+A (informational). Sub-flow that invokes this skill applies its own gating logic based on VERDICT.
+
+## Failure modes
+
+| Symptom | Response |
+|---|---|
+| `wiki/capabilities/` doesn't exist (fresh repo) | Output empty dependency-impact.md; verdict OK. |
+| spec.md unparseable (manual edit broke markdown) | Catch parse error; skip file; log warning. Don't crash entire scan. |
+| Registry yaml unreachable | Fall back to file-only scan; flag in output. |
+| Circular dependency detected | BLOCK regardless of mode. Output cycle path explicitly. |
+| Match confidence ambiguous | Default to medium; surface to founder for ack. |
+
+## LLM mode awareness
+
+N/A — pure deterministic scan. Same behavior in all modes (subscription / hybrid / fallback).
+
+## Cost estimate
+
+- Anthropic API: $0 (no LLM call)
+- Compute: ~5-15s (depends on capability count; O(N²) for circular check, capped at depth 5)
+- Founder time: 0-2 min (only if reviewing dependencies)
+- Cost-bucket: not charged
+
+## Test fixtures
+
+- `tests/cla/fixtures/dependency-scanner-no-deps.json` — capability with 0 references; expects empty result + OK verdict
+- `tests/cla/fixtures/dependency-scanner-active-deps.json` — capability with 2 active dependents; mode=deprecate expects BLOCK
+- `tests/cla/fixtures/dependency-scanner-circular.json` — A → B → A; expects BLOCK regardless of mode
+- `tests/cla/fixtures/dependency-scanner-mixed-states.json` — mix of active/inactive/in-flight dependents
+- `tests/cla/fixtures/dependency-scanner-malformed-spec.json` — one spec.md unparseable; expects skip + warning, scan continues
+
+---
+
+**Used by:** `SOP-AIOPS-001-extend/flow.yaml` (Phase 3), `SOP-AIOPS-001-deprecate/flow.yaml` (Phase 3).

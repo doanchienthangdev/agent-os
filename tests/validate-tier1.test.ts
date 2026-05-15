@@ -18,7 +18,7 @@ import { tmpdir } from "node:os";
 const REPO = resolve(__dirname, "..");
 const VALIDATOR = join(REPO, "scripts", "validate-tier1.cjs");
 
-// 18 yamls FILE_TO_SCHEMA covers (matches scripts/validate-tier1.cjs)
+// 22 yamls FILE_TO_SCHEMA covers (matches scripts/validate-tier1.cjs)
 const COVERED_YAMLS = [
   "feature-flags.yaml",
   "schedules.yaml",
@@ -39,6 +39,9 @@ const COVERED_YAMLS = [
   "ingestion-routing.yaml",
   "founder-rhythm.yaml",
   "cross-tier-invariants.yaml",
+  "workforce-personas.yaml",
+  "cla-routing-keywords.yaml",
+  "capability-registry.yaml",
 ];
 
 interface RunResult {
@@ -74,10 +77,10 @@ function runValidator(cwd: string): RunResult {
 // ============================================================================
 
 describe("validate-tier1 — real repo (current state)", () => {
-  it("exits 0 with all 19 yamls valid", () => {
+  it("exits 0 with all 22 yamls valid", () => {
     const r = runValidator(REPO);
     expect(r.status).toBe(0);
-    expect(r.stdout).toMatch(/Valid:\s+19\/19/);
+    expect(r.stdout).toMatch(/Valid:\s+22\/22/);
     expect(r.stdout).toMatch(/Invalid:\s+0/);
     expect(r.stdout).toMatch(/Missing:\s+0/);
     expect(r.stdout).toContain("All present files valid");
@@ -205,11 +208,11 @@ describe("validate-tier1 — fixture failure cases", () => {
     expect([0, 1]).toContain(r.status);
   });
 
-  it("preserves exit code 0 when all 19 covered files present + valid", () => {
+  it("preserves exit code 0 when all 22 covered files present + valid", () => {
     // Don't mutate anything — fixture is a copy of the working real repo.
     const r = runValidator(fixture);
     expect(r.status).toBe(0);
-    expect(r.stdout).toMatch(/Valid:\s+19\/19/);
+    expect(r.stdout).toMatch(/Valid:\s+22\/22/);
   });
 });
 
@@ -224,10 +227,10 @@ describe("validate-tier1 — invariants", () => {
     expect(r1.status).toBe(r2.status);
   });
 
-  it("output mentions exactly 19 yamls (matches FILE_TO_SCHEMA size)", () => {
+  it("output mentions exactly 22 yamls (matches FILE_TO_SCHEMA size)", () => {
     const r = runValidator(REPO);
     // Count occurrences of yaml filenames in output
     const mentioned = COVERED_YAMLS.filter((y) => r.stdout.includes(y));
-    expect(mentioned).toHaveLength(19);
+    expect(mentioned).toHaveLength(22);
   });
 });

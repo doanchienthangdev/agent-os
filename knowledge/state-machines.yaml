@@ -6,7 +6,7 @@
 # state_log sidecar table.
 #
 # Schema validation: schemas/state-machines.schema.json
-# Engine: 05-ai-ops/skills/state-transition/
+# Engine: 06-ai-ops/skills/state-transition/
 # ============================================================================
 
 version: "1.0.0"

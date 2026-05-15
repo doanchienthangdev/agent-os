@@ -6,7 +6,7 @@
 
 - **Substrate improvements** — bug fixes, performance improvements, schema corrections in `supabase/migrations/` (additive only — additions get a new migration number, never edit existing ones).
 - **New generic hooks** — anything in `.claude/hooks/` that's truly cross-org useful (not org-specific).
-- **New generic skills** — anything in `05-ai-ops/skills/` that mechanism-only and would help any org. Skills with org-specific assumptions belong in the user's fork.
+- **New generic skills** — anything in `06-ai-ops/skills/` that mechanism-only and would help any org. Skills with org-specific assumptions belong in the user's fork.
 - **Documentation improvements** — clearer explanations of the architecture, better examples in `00-charter/*.md` stubs, fixes to `governance/HITL.md` policy edge cases.
 - **Init wizard improvements** — `scripts/init.cjs` enhancements, additional placeholder coverage, better idempotency.
 - **DEPLOY.md improvements** — clearer guidance for the AI walking a founder through bootstrap.

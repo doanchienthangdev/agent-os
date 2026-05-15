@@ -152,7 +152,7 @@ invariants:
   # Governance ROLES ↔ skills (L2)
   # --------------------------------------------------------------------------
   - id: roles-skills-exist
-    description: "Every skill mentioned in governance/ROLES.md must exist under 05-ai-ops/skills/"
+    description: "Every skill mentioned in governance/ROLES.md must exist under 06-ai-ops/skills/"
     kind: subset
     layer: L2
     source:
@@ -161,7 +161,7 @@ invariants:
       query: "regex:^\\s*-\\s+([a-z][a-z0-9-]+)\\s*$"
     target:
       tier: 1
-      ref: 05-ai-ops/skills/
+      ref: 06-ai-ops/skills/
       query: "ls"
     severity: warn
     hitl_tier: B
@@ -224,7 +224,7 @@ invariants:
       query: "$..event_type"
     target:
       tier: 1
-      ref: "supabase/migrations/, supabase/functions/, 05-ai-ops/skills/"
+      ref: "supabase/migrations/, supabase/functions/, 06-ai-ops/skills/"
       query: "regex:event_type[\"':\\s]+([a-z][a-z0-9._-]+)"
     severity: warn
     hitl_tier: B
