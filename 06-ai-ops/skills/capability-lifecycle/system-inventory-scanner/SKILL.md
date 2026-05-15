@@ -1,0 +1,194 @@
+---
+name: system-inventory-scanner
+description: Phase 3 of CLA workflow (Bài #20). Inventories existing Agent OS state — skills, SOPs, Tier 1 yamls, MCP servers, deployed capabilities, recent KPIs. Identifies gaps vs the proposed capability. Deterministic — no LLM call required (reads files + queries `ops.*`). Writes `.archives/cla/<id>/gap-analysis.md`.
+---
+
+# System Inventory Scanner (CLA Phase 3)
+
+## When to use
+
+- After Phase 2 `domain-analysis.md` exists. `ops.capability_runs.current_phase = 3`.
+- State = `analyzing`.
+
+## Inputs
+
+- `capability_id`
+- `problem_path` — `.archives/cla/<id>/problem.md`
+- `domain_analysis_path` — `.archives/cla/<id>/domain-analysis.md`
+
+## Process — DETERMINISTIC, no LLM
+
+### Step 1 — Run drift check first
+
+`pnpm check` and capture exit code + stdout. Two reasons:
+1. If anything has drifted between Phase 2 and Phase 3 (large repo + multi-session), surface it before doing more work.
+2. The output enumerates which validators are clean — informs the inventory.
+
+If `pnpm check` exits non-zero: write the drift summary into the gap-analysis.md preamble and STOP at this step (do not proceed to inventory). Founder fixes drift, then re-runs Phase 3.
+
+### Step 2 — Enumerate skills
+
+```bash
+find 06-ai-ops/skills -name SKILL.md -type f
+```
+
+For each, parse the frontmatter `name` + `description`. Group by category (capability-lifecycle, ingestion, ops, etc.).
+
+### Step 3 — Enumerate SOPs
+
+```bash
+find . -path '*/sops/*/flow.yaml' -type f
+```
+
+For each `flow.yaml`, parse `id`, `title`, `pillar`, `trigger.kinds`. Store as a flat list.
+
+### Step 4 — Enumerate Tier 1 yamls
+
+List `knowledge/*.yaml` (top-level only — not the schemas dir, not phase-a2-extensions). For each, read the top-level keys to summarize (e.g., `channels.yaml` → list channel slugs; `kpi-registry.yaml` → list KPI ids).
+
+### Step 5 — Enumerate MCP servers
+
+Read `mcp/servers.yaml` if it exists. List server slugs + their `tools[]`. (If MCP layer not yet wired, note "MCP layer not configured — see TODOS.md".)
+
+### Step 6 — Enumerate deployed capabilities
+
+Query (via Supabase MCP):
+```sql
+SELECT capability_id, capability_name, state, current_phase, deployed_at
+FROM ops.capability_runs
+WHERE state IN ('deployed', 'operating')
+ORDER BY deployed_at DESC NULLS LAST;
+```
+
+Also merge with `knowledge/capability-registry.yaml` `capabilities[]` for any pre-DB entries (e.g., the `capability-lifecycle-architecture` meta entry).
+
+### Step 7 — Enumerate recent KPI snapshots (signal)
+
+Query last 7 days of `ops.kpi_snapshots` for KPIs mentioned in `domain-analysis.md` § Critical risks (if any). This gives the founder current baseline numbers to ground the gap analysis.
+
+### Step 8 — Match against problem.md needs
+
+Read `problem.md` § "Refined problem statement" + "Success criteria" + "Assumptions". For each piece of capability the problem implies (LLM-extracted? no — rule-based: nouns matched against skill names, KPI names, channel slugs):
+
+- **Reuse**: existing skill/SOP/Tier 1 entry that already does the thing.
+- **Extend**: existing entity needs a tweak (list which file).
+- **Build**: nothing in inventory matches.
+- **External**: requires a new MCP server or external service.
+
+Use a simple matrix; do not LLM this — keyword overlap is enough at Phase 3.
+
+### Step 9 — Write `.archives/cla/<capability_id>/gap-analysis.md`
+
+```markdown
+# Gap Analysis: {capability-name}
+
+**Capability ID:** {capability_id}
+**Phase:** 3 — System Inventory
+**Generated:** {date}
+**Drift check:** {clean | N CRITICAL drift — see Phase 0 retry}
+
+## Current Agent OS state (relevant subset)
+
+### Skills ({N total})
+- `{skill-name}` — {1-line desc} {(✓ relevant) or omit}
+...
+
+### SOPs ({N total})
+- `{sop-id}` ({pillar}) — {1-line desc}
+...
+
+### Tier 1 yamls ({N files})
+- `channels.yaml` — channels: {list}
+- `kpi-registry.yaml` — KPIs: {list}
+- ...
+
+### MCP servers ({N or "not configured"})
+- `{server-slug}` — tools: {list}
+
+### Deployed capabilities ({N})
+| ID | State | Pillar | Deployed |
+|---|---|---|---|
+
+### Recent KPI signal (last 7 days)
+| KPI | Latest value | Trend |
+|---|---|---|
+
+## Reuse vs build matrix
+
+| Capability piece | Status | Action |
+|---|---|---|
+| Lead capture form | ✗ build | New skill `lead-capture` |
+| Outreach drafter | ✓ reuse | `email-draft` (extend with new template) |
+| Reddit polling | ✗ external | New MCP server or scheduled scraper |
+| daily_new_customers KPI | ✗ build | Add to `kpi-registry.yaml` |
+
+## External services likely needed
+- {Service A}: ~${X}/mo, purpose Y
+- ...
+
+## Tier 1 yamls likely affected
+- `channels.yaml` — add: {entry}
+- `kpi-registry.yaml` — add: {entry}
+
+## Next phase
+Phase 4 — Options Generation (`options-generator`).
+```
+
+### Step 10 — Persist state
+
+- UPDATE `ops.capability_runs` SET `gap_analysis_path = '.archives/cla/<id>/gap-analysis.md'`, `phases_completed = phases_completed || 3`, `current_phase = 4`, `state = 'architecting'`, `state_since = now()`.
+- INSERT `ops.capability_phase_events`, `ops.events` (`${ORG_EVENT_NS}.capability.system_inventoried`), `ops.run_summaries` (~100 tokens — list the # of reuse vs build items).
+
+## Outputs
+
+- `.archives/cla/<capability_id>/gap-analysis.md`
+- No `ops.cost_attributions` (deterministic, no LLM call).
+
+## State transition
+
+`analyzing → architecting`
+
+## HITL
+
+Tier A. Auto-advance.
+
+## Failure modes
+
+| Symptom | Response |
+|---|---|
+| `pnpm check` non-zero | Write drift summary; STOP. Don't write gap-analysis.md beyond the preamble. |
+| Supabase MCP unreachable | Skip Step 6's DB query; merge from registry yaml only; flag at top of gap-analysis.md. |
+| `mcp/servers.yaml` missing | Skip Step 5; note in output. |
+
+## LLM mode awareness
+
+- N/A — this skill is deterministic. Same behavior in all modes.
+
+## Cost estimate
+
+- Anthropic API: $0 (no LLM).
+- Compute: ~5-15 seconds depending on repo size.
+- Founder time: 2-5 min review.
+- Cost-bucket: not charged (no LLM).
+
+## Test fixtures
+
+- `tests/cla/fixtures/system-inventory-clean.json` — clean repo state, full enumeration.
+- `tests/cla/fixtures/system-inventory-drift.json` — `pnpm check` would fail; expects STOP.
+
+## Mode awareness (v1.1 — `cla-update-mechanism`)
+
+| Mode | Skill behavior |
+|---|---|
+| `create` (default) | Full Process Steps 1-10 above. Output: `.archives/cla/<id>/gap-analysis.md` |
+| `fix` | **Not invoked.** Fix is small enough to skip inventory; @cto direct delegation handles scope. |
+| `extend` | Run Steps 1-8 + invoke `dependency-scanner` skill (NEW v1.1) at Step 9. Output: `.archives/cla/<id>-extend-<session_id>/extension-gap-analysis.md` AND `dependency-impact.md`. The dependency impact is informational; founder gets warned but not blocked. |
+| `revise` | Same as `extend` — full inventory + dependency scan. Output goes under `<id>-revise-<session_id>/`. Critical for revisions since downstream impact is potentially large. |
+| `tune` | **Not invoked.** Tune is registry edit only; no new components to inventory. |
+| `deprecate` | Run `dependency-scanner` ONLY (skip the rest of Steps 1-8). MANDATORY blocker — if any active dependent capability found, BLOCK Phase 8. Founder may override via Tier D-Std magic phrase. Output: `.archives/cla/<id>-deprecate-<session_id>/dependency-impact.md`. |
+
+**Common across modes:** when `dependency-scanner` is invoked, it reads all `wiki/capabilities/*/spec.md` for cross-references. See `06-ai-ops/skills/capability-lifecycle/dependency-scanner/SKILL.md`.
+
+---
+
+**Next phase invokes:** `options-generator` (Phase 4) in `create` and `revise` modes; `architect` (Phase 5) in `extend` mode (skips Phase 4); `catalog-updater` (Phase 8) in `tune` and `deprecate` modes (skips Phases 4-7).

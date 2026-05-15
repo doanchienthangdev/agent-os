@@ -19,7 +19,7 @@ See [`AGENT-OS-README.md`](./AGENT-OS-README.md) for the full pitch.
 
 ## Status
 
-**v0.1 — boilerplate.** Substrate is complete; pillars `01`–`08` (except `05-ai-ops`) are empty stubs you fill in for your org. Architecture is load-tested in shape, **not in operation**. Picking one pillar and running it through the loop is the first proof.
+**v0.1 — boilerplate.** Substrate is complete; pillars `01`–`08` (except `06-ai-ops`) are empty stubs you fill in for your org. Architecture is load-tested in shape, **not in operation**. Picking one pillar and running it through the loop is the first proof.
 
 ## License
 

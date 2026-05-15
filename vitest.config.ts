@@ -4,6 +4,11 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.test.cjs"],
     environment: "node",
+    // Disable cross-file parallelism. The CLA preflight-drift tests mutate
+    // knowledge/cla-routing-keywords.yaml on disk; running in parallel with
+    // tests/validate-tier1.test.ts (which reads the same file) causes
+    // intermittent failures. Within a file vitest still runs tests in order.
+    fileParallelism: false,
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

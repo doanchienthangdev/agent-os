@@ -9,7 +9,7 @@
 -- Populated by:
 --   - .claude/hooks/pre-llm-call-budget.md → cost_attributions on every call
 --   - hook breach detection → budget_alerts
---   - 05-ai-ops/skills/cost-optimization-review → optimization_recommendations
+--   - 06-ai-ops/skills/cost-optimization-review → optimization_recommendations
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------

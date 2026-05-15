@@ -79,6 +79,18 @@ Context window is the most expensive resource here. Per role, see `governance/RO
 
 If you hit `working_tokens × trigger_compact_at`, run `/compact` with instructions to preserve the active task's decisions, files-touched list, and any pending HITL approvals. For sub-tasks that produce verbose intermediate work, prefer subagents (in `.claude/agents/`) — they keep your main context clean.
 
+## New capabilities — use /cla
+
+For any new business capability that needs a structured ceremony (skill + SOP + Tier 1 changes + migrations + integrations), use `/cla propose "<problem>"`. This runs the 8-phase Capability Lifecycle Architecture — drift pre-flight, problem framing, domain analysis, system inventory, options + recommendation, architecture spec, sprint planning, multi-session implementation, and registry promotion.
+
+For evolving existing capabilities, use the sub-flows: `/cla fix`, `/cla extend`, `/cla revise`, `/cla tune`, `/cla deprecate`. See `notes/CLA-USAGE.md` for the full guide.
+
+## Workforce personas
+
+When the founder invokes `/<slug>` or `@<slug>` (e.g., `/ceo`, `@cto`), look up the persona in `knowledge/workforce-personas.yaml` and apply the bound role's permissions from `governance/ROLES.md`. The persona may NARROW HITL tier below the role's ceiling but MUST NOT broaden any permission. See `notes/WORKFORCE-PERSONAS-USAGE.md`.
+
+The boilerplate ships with one placeholder persona (`gpt`). Replace with your real C-suite as you roster them.
+
 ## When to ask
 
 Ambiguity is resolved by the founder. Open an issue with `clarification-needed`, summarize the ambiguity in 3 sentences, propose a default to use until clarified.

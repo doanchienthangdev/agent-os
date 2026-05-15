@@ -317,6 +317,62 @@ function prunePillars(enabled) {
   return removed;
 }
 
+// Generic pillar README template used when wizard creates new pillars in custom mode.
+function pillarReadmeFor(pillarSlug) {
+  const namePart = pillarSlug.replace(/^\d+-/, "");
+  const display = namePart.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return `# Pillar: ${display}
+
+> Status: scaffolded / not yet operating
+
+## What this pillar does (when populated)
+
+[Describe what this pillar of your operating company does — its workflows,
+responsibilities, KPIs, and SOPs.]
+
+## SOPs in this pillar
+
+(none yet — add files under \`${pillarSlug}/sops/SOP-${namePart.toUpperCase()}-XXX-<name>/\`)
+
+## Skills owned by this pillar
+
+(none yet — add files under \`06-ai-ops/skills/\` and reference them from
+\`knowledge/capability-registry.yaml\` with \`home_pillar: ${pillarSlug}\`)
+
+## Roles primarily working in this pillar
+
+(see \`governance/ROLES.md\`; add new roles as needed)
+
+## Key Tier 2 tables
+
+(reference \`knowledge/manifest.yaml\` for the canonical list)
+
+## Removing this pillar
+
+If your organization decides this pillar is not needed:
+1. Delete this directory.
+2. Remove the pillar entry from \`knowledge/manifest.yaml\` under
+   \`tier1_canonical.pillars\`.
+3. Remove any roles whose \`home_pillar\` was this one from
+   \`governance/ROLES.md\`.
+4. Remove any \`event-subscriptions.yaml\` rules referencing this pillar.
+5. Run \`pnpm check\` to verify nothing references the deleted pillar.
+`;
+}
+
+// Create custom pillar dirs (in CUSTOM mode). Existing dirs are not overwritten.
+function createCustomPillars(customPillars) {
+  const created = [];
+  for (const pillar of customPillars) {
+    const pillarDir = path.join(ROOT, pillar);
+    if (fs.existsSync(pillarDir)) continue;
+    fs.mkdirSync(pillarDir, { recursive: true });
+    fs.writeFileSync(path.join(pillarDir, "README.md"), pillarReadmeFor(pillar), "utf8");
+    created.push(pillar);
+  }
+  return created;
+}
+
 // ---------- smoke test ----------
 
 function runSmokeTest() {
@@ -404,11 +460,45 @@ async function main() {
   console.log("");
   console.log("Step 4/4 — Pillars");
   console.log("");
-  const pillarChoices = ALL_PILLARS;
-  const PILLARS_ENABLED = await askMulti("Which pillars do you want to keep? (others will be removed)", pillarChoices);
-  if (PILLARS_ENABLED.length === 0) {
-    console.log("  ⚠ No pillars selected — keeping ALL pillars (you can manually delete later).");
-    PILLARS_ENABLED.push(...pillarChoices);
+  console.log("The starter set is B2C-product-company-shaped. For different org types");
+  console.log("(film studio, personal-OS, agency, e-commerce) you'll want different pillars.");
+  console.log("See notes/PILLAR-EXAMPLES.md for example layouts.");
+  console.log("");
+  const pillarMode = (await ask("Pillar mode: (s)tarter set / (c)ustom / (k)eep all", "s")).toLowerCase();
+
+  let PILLARS_ENABLED = [];
+  let CUSTOM_PILLARS = [];
+
+  if (pillarMode === "c") {
+    // Custom mode: user supplies pillar slugs, wizard renames the starter dirs.
+    console.log("");
+    console.log("Enter your pillar slugs comma-separated (e.g. for an AI film studio:");
+    console.log("  development,production,post-production,distribution,talent,finance,rights");
+    console.log("");
+    console.log("Numeric prefixes (01-, 02-, ...) are added automatically in declared order.");
+    console.log("Sub-pillars MUST NOT have numeric prefixes — that's enforced by validate-pillar-numbering.cjs.");
+    console.log("");
+    const raw = await askRequired("Custom pillar slugs (comma-separated)");
+    CUSTOM_PILLARS = raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-"))
+      .filter(Boolean)
+      .map((slug, i) => `${String(i + 1).padStart(2, "0")}-${slug}`);
+    console.log("");
+    console.log(`  Will create: ${CUSTOM_PILLARS.join(", ")}`);
+    console.log(`  Will remove starter pillars: ${ALL_PILLARS.join(", ")}`);
+    PILLARS_ENABLED = CUSTOM_PILLARS;
+  } else if (pillarMode === "k") {
+    PILLARS_ENABLED = [...ALL_PILLARS];
+    console.log("  ✓ Keeping all starter pillars.");
+  } else {
+    // Starter mode: pick which to keep
+    const pillarChoices = ALL_PILLARS;
+    PILLARS_ENABLED = await askMulti("Which starter pillars do you want to keep? (others will be removed)", pillarChoices);
+    if (PILLARS_ENABLED.length === 0) {
+      console.log("  ⚠ No pillars selected — keeping ALL starter pillars (you can manually delete later).");
+      PILLARS_ENABLED.push(...pillarChoices);
+    }
   }
 
   const ORG_SLUG_UPPER = uppercaseSlug(ORG_SLUG);
@@ -478,15 +568,27 @@ async function main() {
     console.log(`  ✓ Wrote ${ENV_LOCAL_TARGET} (review and add ANTHROPIC_API_KEY etc.)`);
   }
 
-  // ---- prune pillars ----
+  // ---- pillar layout ----
 
   console.log("");
-  console.log("Pruning unselected pillars...");
-  const removed = prunePillars(PILLARS_ENABLED);
-  if (removed.length) {
-    console.log(`  ✓ Removed: ${removed.join(", ")}`);
+  if (CUSTOM_PILLARS.length > 0) {
+    // Custom mode: remove ALL starter pillars, then create the custom set.
+    console.log("Removing starter pillars (custom mode)...");
+    const removed = prunePillars([]); // empty enabled list = remove all starters
+    if (removed.length) console.log(`  ✓ Removed: ${removed.join(", ")}`);
+    console.log("");
+    console.log("Creating custom pillars...");
+    const created = createCustomPillars(CUSTOM_PILLARS);
+    if (created.length) console.log(`  ✓ Created: ${created.join(", ")}`);
   } else {
-    console.log("  ✓ No pillars removed (all kept or had non-default content).");
+    // Starter or keep-all mode: prune what user didn't select.
+    console.log("Pruning unselected pillars...");
+    const removed = prunePillars(PILLARS_ENABLED);
+    if (removed.length) {
+      console.log(`  ✓ Removed: ${removed.join(", ")}`);
+    } else {
+      console.log("  ✓ No pillars removed (all kept or had non-default content).");
+    }
   }
 
   // ---- write history ----

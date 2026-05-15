@@ -52,7 +52,7 @@ Per-pillar specialized agents as capabilities deploy.
 - `governance/HITL.md` — HITL tier definitions per agent
 - `knowledge/mcp-tools.yaml` — tools each agent can call
 - `knowledge/mcp-roles.yaml` — per-role tool whitelists
-- `05-ai-ops/skills/` — composable skills agents invoke
+- `06-ai-ops/skills/` — composable skills agents invoke
 
 ## Agent vs Skill
 

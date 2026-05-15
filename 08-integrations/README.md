@@ -16,7 +16,7 @@
 
 - `integrations-orchestrator` — owns the pillar
 - `webhook-router` — receives, validates, and dispatches incoming webhooks
-- `etl-runner` (cross-cutting; primarily 05-ai-ops) — handles inbound third-party ETL into `ops.*` and `metrics.*`
+- `etl-runner` (cross-cutting; primarily 06-ai-ops) — handles inbound third-party ETL into `ops.*` and `metrics.*`
 
 ## SOPs in this pillar
 

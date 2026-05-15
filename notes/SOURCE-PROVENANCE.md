@@ -2,7 +2,48 @@
 
 > Where this boilerplate came from, what was preserved, what was scrubbed, and how to re-pull substrate updates.
 
-## Source
+## v0.2 backport (2026-05-15)
+
+Backported substrate upgrades from ritsu-works commits 5dca72c..9f2c21c (14 commits). What was ported, in 3 themes:
+
+**CLA — Capability Lifecycle Architecture** (commits `79658b3`, `84a9a50`, `be0d4d4`, `1339bae`, `38a47c8`, `9f2c21c`):
+- `/cla` slash command + `@cla` subagent
+- 10 capability-lifecycle skills (Phase 0-8 dispatchers + version-bumper + dependency-scanner)
+- 6 SOPs (master + fix/extend/revise/tune/deprecate sub-flows)
+- Migration 00025 (capability update lock + lineage view + helper functions)
+- `knowledge/cla-routing-keywords.yaml` (boilerplate ships 1 placeholder route)
+- `knowledge/capability-registry.yaml` (boilerplate ships empty)
+- 18 test files (~520 test cases)
+- Tier 1 schemas + L2 validator wired into `pnpm check`
+- See `notes/CLA-USAGE.md`
+
+**Workforce persona FRAMEWORK** (commits `6f789ef`, `c846981`, `e1f8652`, `e16b346`, `f10d5ff`):
+- Schema (`knowledge/schemas/workforce-personas.schema.json`)
+- Validator (`scripts/cross-tier/validate-personas.cjs`) — wired into `pnpm check` as L2 critical
+- Hook specs (`.claude/hooks/{pre-persona-resolve,post-persona-log}.md`) — runtime deferred
+- Migration 00024 (`agent_runs.persona_slug` column + index)
+- Registry (`knowledge/workforce-personas.yaml`) with 1 placeholder persona (`gpt`)
+- Persona spec folder (`06-ai-ops/workforce-personas/gpt/` with 8 canonical files)
+- Runtime files (`.claude/agents/gpt.md`, `.claude/commands/gpt.md`)
+- Bidirectional binding (`personas_bound: [gpt]` on `gps` role)
+- See `notes/WORKFORCE-PERSONAS-USAGE.md`
+- **Skipped:** Ritsu's Phase 1-4 specific personas (CEO, CTO, CGO, CPO + Phase 2-4 specs) — their frameworks port; the specific binding instances do not
+
+**check-drift improvements** (commit `ff8e8d8`):
+- `validate-pillar-numbering.cjs` with `isTracked()` helper that respects gitignored dirs
+- Wired as L1 critical in `pnpm check`
+- **Skipped:** Ritsu's 11-pillar v1.0.1 architecture restructure — domain-specific
+- **Skipped:** Ritsu's sub-pillar prefix-drop convention — keeps the option open for orgs that want different conventions
+
+**Pillar-set genericization (NEW in v0.2, addressing founder feedback):**
+- `scripts/init.cjs` now offers 3 pillar modes: starter set, custom pillars (org defines its own), or keep all
+- `notes/PILLAR-EXAMPLES.md` documents pillar layouts for B2C SaaS, B2B SaaS, AI film studio, personal-OS, creator/solopreneur, agency, e-commerce, infrastructure SaaS
+
+**Migration count:** 22 → 24 (added 00024 personas + 00025 capability lock; intentional gap at 00023 documented in `supabase/migrations/00023_skipped.md`)
+
+---
+
+## Source (initial v0.1)
 
 - **Source repo:** `doanchienthangdev/ritsu-works`
 - **Source commit SHA:** `5dca72c8f91f798329325366c32634463d422706` (commit message: "Add /check-drift slash command + pnpm check script (project-scoped) (#10)")

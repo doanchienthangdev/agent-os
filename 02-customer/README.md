@@ -30,7 +30,7 @@ Define each in `governance/ROLES.md` as you add them.
 
 ## Skills owned by this pillar
 
-(none yet — add files under `05-ai-ops/skills/` and reference them from `knowledge/capability-registry.yaml` with `home_pillar: 02-customer`)
+(none yet — add files under `06-ai-ops/skills/` and reference them from `knowledge/capability-registry.yaml` with `home_pillar: 02-customer`)
 
 ## Key Tier 2 tables (reference; populated from `knowledge/manifest.yaml`)
 

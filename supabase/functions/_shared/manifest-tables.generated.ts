@@ -5,7 +5,7 @@
 // Source version: 0.2.0
 // ops tables:     29
 // metrics tables: 1
-// Generated at:   2026-05-14T17:11:08.819Z
+// Generated at:   2026-05-15T17:52:40.794Z
 
 export const MANIFEST_OPS_TABLES: readonly string[] = Object.freeze(
 [
